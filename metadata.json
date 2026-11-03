@@ -1,8 +1,8 @@
 {
     "name": "Inactive Feeds Cleaner",
-    "author": "Vous",
-    "description": "Nettoyage et sauvegarde des flux inactifs.",
-    "version": "1.0.0",
+    "author": "widowild",
+    "description": "Identify, back up to OPML and purge inactive RSS feeds.",
+    "version": "1.1.0",
     "entrypoint": "InactiveCleaner",
     "type": "user"
 }

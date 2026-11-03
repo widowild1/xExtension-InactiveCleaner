@@ -1,31 +1,47 @@
+<?php
+$counts = InactiveCleanerExtension::getThresholdCounts();
+$thresholds = InactiveCleanerExtension::THRESHOLDS;
+?>
 <div class="post">
-    <h2>Nettoyage des flux inactifs</h2>
-    <p>Sélectionnez un seuil d'inactivité pour identifier les flux qui n'ont rien publié ou qui n'ont pas été mis à jour depuis cette période.</p>
+    <h2><?= InactiveCleanerExtension::t('title') ?></h2>
+    <p><?= InactiveCleanerExtension::t('desc') ?></p>
     
     <div class="alert alert-warn">
-        <strong>Important :</strong> La suppression est définitive. Pensez à télécharger le fichier <code>.opml</code> correspondant au seuil sélectionné avant de lancer la purge.
+        <strong><?= InactiveCleanerExtension::t('warning_title') ?></strong> <?= InactiveCleanerExtension::t('warning_desc') ?>
     </div>
     
-    <form action="<?= _url('extension', 'configure', 'e', $this->getName()) ?>" method="post">
+    <form action="<?= _url('extension', 'configure', 'e', Minz_Request::param('e', 'Inactive Feeds Cleaner')) ?>" method="post">
+        <input type="hidden" name="_csrf" value="<?= method_exists('FreshRSS_Auth', 'csrfToken') ? FreshRSS_Auth::csrfToken() : Minz_Session::param('_csrf') ?>" />
+
         <div class="form-group">
-            <label class="group-name" for="inactivity_period">Seuil d'inactivité :</label>
+            <label class="group-name" for="inactivity_period"><?= InactiveCleanerExtension::t('period_label') ?></label>
             <div class="group-controls">
-                <select name="inactivity_period" id="inactivity_period">
-                    <option value="30">1 mois (sans publication depuis 30 jours)</option>
-                    <option value="180">6 mois (sans publication depuis 180 jours)</option>
-                    <option value="365" selected="selected">1 an (sans publication depuis 365 jours)</option>
-                    <option value="730">+1 an sans mise à jour (inactif depuis plus de 2 ans)</option>
+                <select name="inactivity_period" id="inactivity_period" style="min-width: 380px;">
+                    <?php foreach ($thresholds as $days): ?>
+                        <?php 
+                            $c = $counts[$days] ?? 0;
+                            $countText = ($c > 0) ? InactiveCleanerExtension::t('feeds_count', $c) : InactiveCleanerExtension::t('no_feeds');
+                            $selected = ($days === 90) ? 'selected="selected"' : '';
+                        ?>
+                        <option value="<?= $days ?>" <?= $selected ?>>
+                            <?= InactiveCleanerExtension::t('period_' . $days) ?> — <?= $countText ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
         </div>
 
         <div class="form-group form-actions" style="display: flex; gap: 15px; margin-top: 20px;">
             <button type="submit" name="clean_action" value="export_opml" class="btn">
-                📥 Sauvegarder les flux ciblés (.opml)
+                <?= InactiveCleanerExtension::t('btn_export') ?>
             </button>
-            <button type="submit" name="clean_action" value="clean_feeds" class="btn btn-important" onclick="return confirm('Attention : tous les flux correspondant à la période choisie seront supprimés. Confirmer ?');">
-                🗑️ Supprimer les flux ciblés
+            <button type="submit" name="clean_action" value="clean_feeds" class="btn btn-important" onclick="return confirm('<?= addslashes(InactiveCleanerExtension::t('confirm_delete')) ?>');">
+                <?= InactiveCleanerExtension::t('btn_clean') ?>
             </button>
         </div>
     </form>
+    
+    <p class="help" style="margin-top: 25px; color: #777;">
+        ℹ️ <em><?= InactiveCleanerExtension::t('log_info') ?></em>
+    </p>
 </div>
