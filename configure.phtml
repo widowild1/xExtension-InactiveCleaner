@@ -1,22 +1,31 @@
 <div class="post">
     <h2>Nettoyage des flux inactifs</h2>
-    <p>Cette extension analyse tous vos abonnements et vous permet de sauvegarder puis de supprimer les flux RSS dont le dernier article publié date de plus d'un an (365 jours).</p>
+    <p>Sélectionnez un seuil d'inactivité pour identifier les flux qui n'ont rien publié ou qui n'ont pas été mis à jour depuis cette période.</p>
     
     <div class="alert alert-warn">
-        <strong>Attention :</strong> La suppression est irréversible. Nous vous recommandons de télécharger la sauvegarde OPML de vos flux inactifs avant de procéder au nettoyage.
+        <strong>Important :</strong> La suppression est définitive. Pensez à télécharger le fichier <code>.opml</code> correspondant au seuil sélectionné avant de lancer la purge.
     </div>
     
-    <!-- Bouton de sauvegarde OPML -->
-    <form action="<?= _url('extension', 'configure', 'e', $this->getName()) ?>" method="post" style="margin-bottom: 20px;">
-        <input type="hidden" name="clean_action" value="export_opml">
-        <button type="submit" class="btn">📥 Télécharger la sauvegarde (.opml) des flux inactifs</button>
-    </form>
+    <form action="<?= _url('extension', 'configure', 'e', $this->getName()) ?>" method="post">
+        <div class="form-group">
+            <label class="group-name" for="inactivity_period">Seuil d'inactivité :</label>
+            <div class="group-controls">
+                <select name="inactivity_period" id="inactivity_period">
+                    <option value="30">1 mois (sans publication depuis 30 jours)</option>
+                    <option value="180">6 mois (sans publication depuis 180 jours)</option>
+                    <option value="365" selected="selected">1 an (sans publication depuis 365 jours)</option>
+                    <option value="730">+1 an sans mise à jour (inactif depuis plus de 2 ans)</option>
+                </select>
+            </div>
+        </div>
 
-    <hr>
-
-    <!-- Bouton de suppression avec fenêtre de confirmation -->
-    <form action="<?= _url('extension', 'configure', 'e', $this->getName()) ?>" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement tous vos flux inactifs ?');">
-        <input type="hidden" name="clean_action" value="clean_feeds">
-        <button type="submit" class="btn btn-important">🗑️ Analyser et supprimer les flux inactifs maintenant</button>
+        <div class="form-group form-actions" style="display: flex; gap: 15px; margin-top: 20px;">
+            <button type="submit" name="clean_action" value="export_opml" class="btn">
+                📥 Sauvegarder les flux ciblés (.opml)
+            </button>
+            <button type="submit" name="clean_action" value="clean_feeds" class="btn btn-important" onclick="return confirm('Attention : tous les flux correspondant à la période choisie seront supprimés. Confirmer ?');">
+                🗑️ Supprimer les flux ciblés
+            </button>
+        </div>
     </form>
 </div>
