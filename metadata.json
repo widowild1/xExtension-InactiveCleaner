@@ -1,0 +1,8 @@
+{
+    "name": "Inactive Feeds Cleaner",
+    "author": "widowild1",
+    "description": "Supprime définitivement les flux RSS qui n'ont pas publié de nouvel article depuis plus d'un an.",
+    "version": "1.0.0",
+    "entrypoint": "extension.php",
+    "type": "user"
+}
