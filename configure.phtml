@@ -1,14 +1,22 @@
 <div class="post">
     <h2>Nettoyage des flux inactifs</h2>
-    <p>Cette extension analyse tous vos abonnements et <strong>supprime de façon permanente</strong> les flux RSS dont le dernier article publié date de plus d'un an (365 jours).</p>
+    <p>Cette extension analyse tous vos abonnements et vous permet de sauvegarder puis de supprimer les flux RSS dont le dernier article publié date de plus d'un an (365 jours).</p>
     
     <div class="alert alert-warn">
-        <strong>Attention :</strong> La suppression est irréversible. Assurez-vous d'avoir une sauvegarde de vos flux ou de votre base de données avant de procéder. Les flux n'ayant aucun article en base de données seront ignorés par mesure de sécurité (cas des flux nouvellement ajoutés n'ayant pas encore été actualisés).
+        <strong>Attention :</strong> La suppression est irréversible. Nous vous recommandons de télécharger la sauvegarde OPML de vos flux inactifs avant de procéder au nettoyage.
     </div>
     
-    <form action="<?= _url('extension', 'configure', 'e', $this->getName()) ?>" method="post">
-        <div class="form-group form-actions">
-            <button type="submit" class="btn btn-important">Analyser et supprimer les flux inactifs maintenant</button>
-        </div>
+    <!-- Bouton de sauvegarde OPML -->
+    <form action="<?= _url('extension', 'configure', 'e', $this->getName()) ?>" method="post" style="margin-bottom: 20px;">
+        <input type="hidden" name="clean_action" value="export_opml">
+        <button type="submit" class="btn">📥 Télécharger la sauvegarde (.opml) des flux inactifs</button>
+    </form>
+
+    <hr>
+
+    <!-- Bouton de suppression avec fenêtre de confirmation -->
+    <form action="<?= _url('extension', 'configure', 'e', $this->getName()) ?>" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement tous vos flux inactifs ?');">
+        <input type="hidden" name="clean_action" value="clean_feeds">
+        <button type="submit" class="btn btn-important">🗑️ Analyser et supprimer les flux inactifs maintenant</button>
     </form>
 </div>
