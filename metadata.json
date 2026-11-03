@@ -3,6 +3,6 @@
     "author": "Vous",
     "description": "Nettoyage et sauvegarde des flux inactifs.",
     "version": "1.0.0",
-    "entrypoint": "InactiveCleanerExtension",
+    "entrypoint": "InactiveCleaner",
     "type": "user"
 }
