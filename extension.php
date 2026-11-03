@@ -3,43 +3,53 @@
 class InactiveCleanerExtension extends Minz_Extension {
     
     public function init() {
-        // Déclenchement manuel uniquement
+        // Déclenchement manuel
     }
 
     public function handleConfigureAction() {
         if (Minz_Request::isPost()) {
-            // Récupère l'action demandée par le formulaire (export ou nettoyage)
             $action = Minz_Request::param('clean_action', '');
+            // Récupération de la durée en jours (par défaut 365 jours)
+            $days = (int)Minz_Request::param('inactivity_period', 365);
+            if ($days <= 0) {
+                $days = 365;
+            }
 
             if ($action === 'export_opml') {
-                $this->exportInactiveFeedsOPML();
+                $this->exportInactiveFeedsOPML($days);
             } elseif ($action === 'clean_feeds') {
-                $count = $this->cleanInactiveFeeds();
-                Minz_Request::good('Nettoyage terminé. ' . $count . ' flux inactif(s) supprimé(s).', 
+                $count = $this->cleanInactiveFeeds($days);
+                Minz_Request::good('Nettoyage terminé : ' . $count . ' flux inactif(s) supprimé(s).', 
                                    array('c' => 'extension', 'a' => 'configure', 'e' => $this->getName()));
             }
         }
     }
 
-    // Fonction centralisée pour lister les flux de plus d'un an
-    private function getInactiveFeeds() {
+    private function getInactiveFeeds($days = 365) {
         $feedDAO = FreshRSS_Factory::createFeedDao();
         $entryDAO = FreshRSS_Factory::createEntryDao();
         
         $feeds = $feedDAO->listFeeds();
-        $one_year_ago = time() - (365 * 24 * 60 * 60);
+        $threshold = time() - ($days * 24 * 60 * 60);
         $inactive_feeds = array();
 
         foreach ($feeds as $feed) {
+            // Récupère le dernier article publié
             $entries = $entryDAO->listWhere('f', $feed->id(), 0, 'DESC', 1);
             
             if (!empty($entries)) {
                 $latest_entry = array_values($entries)[0]; 
-                
                 $entry_date = $latest_entry->date();
                 $timestamp = is_numeric($entry_date) ? (int)$entry_date : strtotime($entry_date);
                 
-                if ($timestamp > 0 && $timestamp < $one_year_ago) {
+                if ($timestamp > 0 && $timestamp < $threshold) {
+                    $inactive_feeds[] = $feed;
+                }
+            } else {
+                // Pour les flux sans article : vérifie la date de dernière mise à jour/tentative du flux
+                $last_update = $feed->lastUpdate();
+                $timestamp = is_numeric($last_update) ? (int)$last_update : strtotime($last_update);
+                if ($timestamp > 0 && $timestamp < $threshold) {
                     $inactive_feeds[] = $feed;
                 }
             }
@@ -48,12 +58,10 @@ class InactiveCleanerExtension extends Minz_Extension {
         return $inactive_feeds;
     }
 
-    // Génère et force le téléchargement du fichier OPML
-    private function exportInactiveFeedsOPML() {
-        $inactive_feeds = $this->getInactiveFeeds();
-        $filename = 'freshrss_flux_inactifs_' . date('Y-m-d') . '.opml';
+    private function exportInactiveFeedsOPML($days = 365) {
+        $inactive_feeds = $this->getInactiveFeeds($days);
+        $filename = 'freshrss_inactifs_' . $days . 'j_' . date('Y-m-d') . '.opml';
         
-        // Vide le buffer pour éviter de corrompre le fichier XML avec d'éventuels retours à la ligne
         if (ob_get_length()) {
             ob_clean();
         }
@@ -65,15 +73,14 @@ class InactiveCleanerExtension extends Minz_Extension {
         echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         echo '<opml version="2.0">' . "\n";
         echo '  <head>' . "\n";
-        echo '    <title>Sauvegarde des flux inactifs FreshRSS</title>' . "\n";
+        echo '    <title>Sauvegarde flux inactifs (' . $days . ' jours)</title>' . "\n";
         echo '    <dateCreated>' . date('r') . '</dateCreated>' . "\n";
         echo '  </head>' . "\n";
         echo '  <body>' . "\n";
         
         if (!empty($inactive_feeds)) {
-            echo '    <outline text="Flux inactifs (plus d\'un an)" title="Flux inactifs">' . "\n";
+            echo '    <outline text="Flux inactifs (' . $days . ' jours)" title="Flux inactifs">' . "\n";
             foreach ($inactive_feeds as $feed) {
-                // Échappe les caractères spéciaux pour assurer la validité du XML
                 $name = htmlspecialchars($feed->name(), ENT_COMPAT, 'UTF-8');
                 $url = htmlspecialchars($feed->url(), ENT_COMPAT, 'UTF-8');
                 $website = htmlspecialchars($feed->website(), ENT_COMPAT, 'UTF-8');
@@ -86,12 +93,11 @@ class InactiveCleanerExtension extends Minz_Extension {
         echo '  </body>' . "\n";
         echo '</opml>';
         
-        die(); // Arrête l'exécution de la page ici pour que seul le XML soit téléchargé
+        die();
     }
 
-    // Supprime les flux identifiés
-    private function cleanInactiveFeeds() {
-        $inactive_feeds = $this->getInactiveFeeds();
+    private function cleanInactiveFeeds($days = 365) {
+        $inactive_feeds = $this->getInactiveFeeds($days);
         $feedDAO = FreshRSS_Factory::createFeedDao();
         $deleted_count = 0;
         
