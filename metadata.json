@@ -1,8 +1,8 @@
 {
     "name": "Inactive Feeds Cleaner",
     "author": "Vous",
-    "description": "Supprime les flux inactifs.",
+    "description": "Nettoyage et sauvegarde des flux inactifs.",
     "version": "1.0.0",
-    "entrypoint": "extension.php",
+    "entrypoint": "InactiveCleanerExtension",
     "type": "user"
 }
